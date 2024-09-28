@@ -104,7 +104,7 @@ class BasicTrainer:
                 
                 # batch_data_tensor = torch.tensor(batch_data, dtype=torch.float32)
                 # theta = self.model.get_theta(batch_data_tensor)
-                theta, _ = self.model.encode(batch_data[0])
+                theta, _ = self.model.encode(batch_data[0].to('cuda'))
 
 
 
