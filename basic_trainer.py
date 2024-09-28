@@ -8,8 +8,12 @@ import logging
 import os
 import scipy
 
+
+
+
 class BasicTrainer:
-    def __init__(self, model, epochs=200, learning_rate=0.002, batch_size=200, lr_scheduler=None, lr_step_size=125, log_interval=5, threshold=10):
+    def __init__(self, model,  epochs=200, learning_rate=0.002, batch_size=200, lr_scheduler=None, lr_step_size=125, log_interval=5, 
+                    threshold=10, device='cuda', sigma=0.1, lmbda=0.9, acc_step=8):
         self.model = model
         self.epochs = epochs
         self.learning_rate = learning_rate
@@ -19,15 +23,24 @@ class BasicTrainer:
         self.log_interval = log_interval
         self.threshold = threshold
 
-        self.rho = rho 
+        # self.rho = rho 
         self.device = device
         self.sigma = sigma
         self.lmbda = lmbda
         self.acc_step = acc_step
-
         self.logger = logging.getLogger('main')
 
-    def make_optimizer(self,):
+
+
+        # Thêm ctr_loss
+        # self.cluster_distribution = cluster_distribution 
+        # self.cluster_mean = cluster_mean 
+        # self.topic_embeddings = topic_embeddings
+        # self.pairwise_euclidean_distance
+
+        # self.CTR = CTR(weight_loss_CTR, sinkhorn_alpha, OT_max_iter=sinkhorn_max_iter)
+
+    def make_adam_optimizer(self,):
         args_dict = {
             'params': self.model.parameters(),
             'lr': self.learning_rate,
@@ -46,6 +59,8 @@ class BasicTrainer:
             sigma=self.sigma, lmbda=self.lmbda
             )
         return optimizer
+
+
 
     def make_lr_scheduler(self, optimizer):
         if self.lr_scheduler == "StepLR":
@@ -70,7 +85,7 @@ class BasicTrainer:
         if self.lr_scheduler:
             print("===>using lr_scheduler")
             self.logger.info("===>using lr_scheduler")
-            lr_scheduler = self.make_lr_scheduler(optimizer)
+            lr_scheduler = self.make_lr_scheduler(adam_optimizer)
 
         data_size = len(dataset_handler.train_dataloader.dataset)
 
@@ -79,16 +94,19 @@ class BasicTrainer:
             loss_rst_dict = defaultdict(float)
             if epoch > self.threshold: is_CTR = True
             else: is_CTR = False
+
             for batch_id, batch in enumerate(dataset_handler.train_dataloader): 
                 *inputs, indices = batch
                 batch_data = inputs
                 rst_dict = self.model(indices, is_CTR, batch_data, epoch_id=epoch)
                 batch_loss = rst_dict['loss']
 
-                
+                theta = self.model.get_theta(batch_data)
+
                 if (batch_id + 1) % accumulation_steps == 0 or (batch_id + 1) == len(dataset_handler.train_dataloader):
 
-                    sam_optimizer.first_step(zero_grad=True)
+                    sam_optimizer.first_step(self.model.get_loss_CTR(theta, indices),
+                                            zero_grad=True)
 
                     rst_dict_adv = self.model(indices, is_CTR, batch_data, epoch_id=epoch)
                     batch_loss_adv = rst_dict_adv['loss'] / accumulation_steps

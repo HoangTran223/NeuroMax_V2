@@ -3,7 +3,7 @@ from torch import nn
 
 
 class CTR(nn.Module):
-    def __init__(self, weight_loss_CTR, sinkhorn_alpha, OT_max_iter=5000, stopThr=.5e-2):
+    def __init__(self, weight_loss_CTR, sinkhorn_alpha, OT_max_iter=1000, stopThr=.5e-2):
         super().__init__()
 
         self.sinkhorn_alpha = sinkhorn_alpha
@@ -56,6 +56,4 @@ class CTR(nn.Module):
 
         # Compute the loss
         loss_CTR = torch.mean(torch.sum(transp * M, dim=(1, 2)))  # Scalar
-        loss_CTR *= self.weight_loss_CTR
-
         return loss_CTR
