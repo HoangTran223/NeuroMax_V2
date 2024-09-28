@@ -19,6 +19,7 @@ class NeuroMax(nn.Module):
                  weight_loss_InfoNCE=10.0, weight_loss_CL=50.0):
         super().__init__()
 
+        self.weight_loss_CTR = weight_loss_CTR
         self.num_topics = num_topics
         self.num_groups = num_groups
         self.beta_temp = beta_temp
