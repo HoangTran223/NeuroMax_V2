@@ -105,12 +105,14 @@ class BasicTrainer:
                 # batch_data_tensor = torch.tensor(batch_data, dtype=torch.float32)
                 # theta = self.model.get_theta(batch_data_tensor)
                 theta, _ = self.model.encode(batch_data[0].to('cuda'))
+                
 
 
 
                 if (batch_id + 1) % accumulation_steps == 0 or (batch_id + 1) == len(dataset_handler.train_dataloader):
-
-                    sam_optimizer.first_step(self.model.get_loss_CTR(theta, indices),
+                    
+                    loss_ctr_ = self.model.get_loss_CTR(theta, indices)
+                    sam_optimizer.first_step(loss_ctr_,
                                             zero_grad=True)
 
                     rst_dict_adv = self.model(indices, is_CTR, batch_data, epoch_id=epoch)
