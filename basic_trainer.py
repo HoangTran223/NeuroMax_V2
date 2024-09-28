@@ -102,8 +102,10 @@ class BasicTrainer:
                 batch_loss = rst_dict['loss']
 
                 # Thêm
-                theta = self.model.get_theta(batch_data)
-                # batch_data = batch_tensor.tolist()
+                batch_data_tensor = torch.tensor(batch_data, dtype=torch.float32)
+                theta = self.model.get_theta(batch_data_tensor)
+
+
 
                 if (batch_id + 1) % accumulation_steps == 0 or (batch_id + 1) == len(dataset_handler.train_dataloader):
 
