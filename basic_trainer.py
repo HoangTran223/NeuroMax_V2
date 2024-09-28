@@ -8,7 +8,7 @@ import logging
 import os
 import scipy
 
-
+from SAM_function.TRAM import TRAM
 
 
 class BasicTrainer:
