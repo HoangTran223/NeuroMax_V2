@@ -74,7 +74,6 @@ if __name__ == "__main__":
                                             lr_scheduler=args.lr_scheduler,
                                             lr_step_size=args.lr_step_size,
                                             threshold=args.threshold,
-                                            rho=args.rho,
                                             device=args.device,
                                             sigma=args.sigma,
                                             lmbda=args.lmbda
