@@ -27,7 +27,6 @@ class KLDivergence:
         return self.klfn(x, y) / x.size(0)
 
 
-
 class TRAM(torch.optim.Optimizer):
 
     def __init__(self, params, base_optimizer, device, adaptive=False, lr=0.002, sigma=1, lmbda=0.9):
@@ -42,92 +41,48 @@ class TRAM(torch.optim.Optimizer):
         self.sigma = sigma
         self.lmbda = lmbda
 
+
     def _grad_norm(self):
-        grads = []
-        for group in self.param_groups:
-            scale = torch.abs(torch.cat([p.detach().view(-1) for p in group['params'] if p.grad is not None])).to(self.device) if group["adaptive"] else 1.0
-            grads.extend([(scale * p.grad.detach().view(-1)).to(self.device) for p in group['params'] if p.grad is not None])
-        grad_norm = torch.norm(torch.cat(grads), p=2)
-        return grad_norm
+        norm = torch.norm(
+                    torch.stack([
+                        ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(self.device)
+                        for group in self.param_groups for p in group["params"] if p.grad is not None ]),
+                    p=2)
+        return norm
 
     @torch.no_grad()
-    def first_step(self, zero_grad=False):
-        grads = []
-        params = []
-        momentums = []
-        scales = []
-        
+    def first_step(self, loss_CTR, zero_grad=False, device='cuda'):
+
         for group in self.param_groups:
-            rho = group["rho"]
-            adaptive = group["adaptive"]
             for p in group["params"]:
-                if p.grad is None:
+                if p.grad is None: 
                     continue
-                params.append(p)
-                grads.append(p.grad.clone())
-                if adaptive:
-                    scales.append(torch.pow(p, 2))
+
+                grad = p.grad.clone()
+                state = self.state[p]
+
+                if "momentum" not in state:
+                    state["momentum"] = grad 
                 else:
-                    scales.append(torch.ones_like(p))
-                if not "momentum" in self.state[p]:
-                    self.state[p]["momentum"] = p.grad.clone()
-                else:
-                    p.grad -= self.state[p]["momentum"] * self.sigma
-                    self.state[p]["momentum"] = self.state[p]["momentum"] * self.lmbda + p.grad * (1 - self.lmbda)
-        
+                    p.grad.add_(state["momentum"], alpha=-self.sigma)
+                    state["momentum"].mul_(self.lmbda).add_(grad, alpha=1 - self.lmbda)  # In-place update momentum
+
+
         grad_norm = self._grad_norm()
-        scale = rho / (grad_norm + 1e-12)
-        
-        for p, grad, s in zip(params, grads, scales):
-            self.state[p]["old_p"] = p.data.clone()
-            e_w = s * grad * scale.to(p.self.device)
-            p.add_(e_w) 
-        
-        if zero_grad:
-            self.zero_grad()
+        scale = loss_CTR / (grad_norm + 1e-12)
 
+        for group in self.param_groups: 
+            for p in group["params"]:
+                if p.grad is None: 
+                    continue
 
-    # def _grad_norm(self):
-    #     norm = torch.norm(
-    #                 torch.stack([
-    #                     ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(self.device)
-    #                     for group in self.param_groups for p in group["params"] if p.grad is not None ]),
-    #                 p=2)
-    #     return norm
+                state = self.state[p]
+                state["old_p"] = p.data.clone() 
 
-    # @torch.no_grad()
-    # def first_step(self, loss_CTR, zero_grad=False, device='cuda'):
+                e_w = (torch.pow(p, 2) if  group["adaptive"] else 1.0) * p.grad * scale
+                p.add_(e_w) 
 
-    #     for group in self.param_groups:
-    #         for p in group["params"]:
-    #             if p.grad is None: 
-    #                 continue
-
-    #             grad = p.grad.clone()
-    #             state = self.state[p]
-
-    #             if "momentum" not in state:
-    #                 state["momentum"] = grad 
-    #             else:
-    #                 p.grad.add_(state["momentum"], alpha=-self.sigma)
-    #                 state["momentum"].mul_(self.lmbda).add_(grad, alpha=1 - self.lmbda)  # In-place update momentum
-
-
-    #     grad_norm = self._grad_norm()
-    #     scale = loss_CTR / (grad_norm + 1e-12)
-
-    #     for group in self.param_groups: 
-    #         for p in group["params"]:
-    #             if p.grad is None: 
-    #                 continue
-
-    #             state = self.state[p]
-    #             state["old_p"] = p.data.clone() 
-
-    #             e_w = (torch.pow(p, 2) if  group["adaptive"] else 1.0) * p.grad * scale
-    #             p.add_(e_w) 
-
-    #     if zero_grad: self.zero_grad()
+        if zero_grad: self.zero_grad()
     
 
     @torch.no_grad()
