@@ -101,9 +101,10 @@ class BasicTrainer:
                 rst_dict = self.model(indices, is_CTR, batch_data, epoch_id=epoch)
                 batch_loss = rst_dict['loss']
 
-                # Thêm
-                batch_data_tensor = torch.tensor(batch_data, dtype=torch.float32)
-                theta = self.model.get_theta(batch_data_tensor)
+                
+                # batch_data_tensor = torch.tensor(batch_data, dtype=torch.float32)
+                # theta = self.model.get_theta(batch_data_tensor)
+                theta = self.model.get_theta(batch)
 
 
 
