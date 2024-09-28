@@ -292,10 +292,10 @@ class NeuroMax(nn.Module):
             
         #CTR
 
-        if is_CTR:
-            loss_CTR = self.get_loss_CTR(theta, indices)
-        else:
-            loss_CTR = 0.0
+        # if is_CTR:
+        #     loss_CTR = self.get_loss_CTR(theta, indices)
+        # else:
+        #     loss_CTR = 0.0
         if epoch_id == 10 and self.group_connection_regularizer is None:
             self.create_group_connection_regularizer()
         if self.group_connection_regularizer is not None and epoch_id > 10:
