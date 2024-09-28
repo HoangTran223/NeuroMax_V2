@@ -306,7 +306,8 @@ class NeuroMax(nn.Module):
         #loss = loss_TM + loss_ECR + loss_GR + loss_InfoNCE
         #loss = loss_TM + loss_ECR + loss_GR + loss_CTR + loss_InfoNCE + loss_CL
         # loss = loss_TM + loss_ECR + loss_GR + loss_InfoNCE + loss_CL
-        loss = loss_TM + loss_ECR + loss_GR + loss_InfoNCE + loss_CTR
+        # loss = loss_TM + loss_ECR + loss_GR + loss_InfoNCE + loss_CTR
+        loss = loss_TM + loss_ECR + loss_GR + loss_InfoNCE
         rst_dict = {
             'loss': loss,
             'loss_CTR': loss_CTR,
