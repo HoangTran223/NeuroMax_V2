@@ -92,8 +92,8 @@ class BasicTrainer:
         for epoch in tqdm(range(1, self.epochs + 1)):
             self.model.train()
             loss_rst_dict = defaultdict(float)
-            if epoch > self.threshold: is_CTR = True
-            else: is_CTR = False
+            # if epoch > self.threshold: is_CTR = True
+            # else: is_CTR = False
 
             for batch_id, batch in enumerate(dataset_handler.train_dataloader): 
                 *inputs, indices = batch
