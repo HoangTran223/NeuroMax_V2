@@ -258,7 +258,8 @@ class NeuroMax(nn.Module):
             torch.sum(y ** 2, dim=1) - 2 * torch.matmul(x, y.t())
         return cost
 
-    def forward(self, indices, is_CTR, input, epoch_id=None):
+    # def forward(self, indices, is_CTR, input, epoch_id=None):
+    def forward(self, indices, input, epoch_id=None):
         #bow = input["data"]
         #contextual_emb = input["contextual_embed"]
         bow = input[0]
