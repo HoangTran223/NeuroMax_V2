@@ -50,7 +50,7 @@ class TRAM(torch.optim.Optimizer):
         norm = torch.norm(
                     torch.stack([
                         ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(self.device)
-                        for group in self.param_groups for p in group["params"] if p.grad is not None ]),
+                        for group in self.param_groups for p in group["params"]]),
                     p=2)
         return norm
 
